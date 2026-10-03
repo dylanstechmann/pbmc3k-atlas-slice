@@ -1,0 +1,10 @@
+cluster	cell_type	n_cells	mean_mito_pct	mean_p21_like	mean_sasp_core
+0	T cell	575	1.77	0.0541	-0.0415
+1	T cell	565	1.99	0.0243	-0.0201
+2	CD14+ monocyte	483	2.32	-0.0237	-0.0053
+3	B cell	341	2.19	-0.0331	0.1848
+4	NK cell	248	2.58	0.0028	-0.0432
+5	NK cell	221	2.06	-0.0614	-0.0565
+6	FCGR3A+ monocyte	154	2.44	-0.0683	-0.0196
+7	Dendritic cell	36	1.96	-0.0061	-0.1166
+8	Platelet	15	2.09	0.1202	0.4285

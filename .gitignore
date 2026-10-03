@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+data/raw/
+data/provenance/
+.ipynb_checkpoints/

@@ -5,6 +5,8 @@ cells) — full Scanpy QC and Leiden clustering, rule-based cell-type
 annotation from canonical markers, and two senescence-adjacent gene-module
 scores (`p21_like`, `sasp_core`) computed per cell type.
 
+This is a personal hobby and learning project, developed with substantial assistance from AI coding tools.
+
 **This is a method demonstration on a healthy-donor reference atlas.**
 PBMC3k contains no senescence induction experiment. Module-score differences
 across cell types do not identify senescent cells; the repo exists to show a

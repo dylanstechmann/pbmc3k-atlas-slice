@@ -52,6 +52,29 @@ class ModuleTests(unittest.TestCase):
         self.assertIn("--seed 17", methods)
         self.assertNotIn("seed 0", methods)
 
+    def test_permutation_null_detects_a_planted_difference_and_not_noise(self) -> None:
+        import numpy as np
+
+        rng = np.random.default_rng(1)
+        labels = np.repeat(["A", "B", "C"], 60)
+        planted = rng.normal(0, 1, 180) + np.where(labels == "A", 3.0, 0.0)
+        noise = rng.normal(0, 1, 180)
+        hit = analyze.label_permutation_null(planted, labels, n_permutations=200, seed=3)
+        null = analyze.label_permutation_null(noise, labels, n_permutations=200, seed=3)
+        self.assertLess(hit["p_add_one"], 0.01)
+        self.assertGreater(null["p_add_one"], 0.05)
+        self.assertEqual(hit, analyze.label_permutation_null(planted, labels, n_permutations=200, seed=3))
+        self.assertGreaterEqual(hit["p_add_one"], 1 / 201)
+
+    def test_permutation_null_rejects_unusable_input(self) -> None:
+        with self.assertRaises(ValueError):
+            analyze.label_permutation_null([1.0, 2.0], ["A"])
+        with self.assertRaises(ValueError):
+            analyze.label_permutation_null([1.0, 2.0], ["A", "A"])
+
+    def test_cell_type_counts(self) -> None:
+        self.assertEqual(analyze.cell_type_counts(["B", "A", "B"]), {"A": 1, "B": 2})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -89,6 +89,54 @@ def pick_cell_type(marker_means: dict[str, float]) -> str | None:
     return max(marker_means, key=lambda key: marker_means[key])
 
 
+def type_spread(scores, labels) -> float:
+    """Variance of the per-cell-type mean score (equal weight per cell type)."""
+    import numpy as np
+
+    scores = np.asarray(scores, dtype=float)
+    labels = np.asarray(labels)
+    means = [scores[labels == label].mean() for label in np.unique(labels)]
+    return float(np.var(means))
+
+
+def label_permutation_null(scores, labels, n_permutations: int = 1000, seed: int = 0) -> dict:
+    """Shuffle cell-type labels across cells and recompute the between-type spread.
+
+    The p-value is the add-one fraction of shuffles whose spread is at least the observed one.
+    It asks only whether the scores differ across the assigned labels more than label-free
+    chance would give; it does not say what the difference means. Labels come from marker
+    rules applied to the same cells, so a small p-value is expected for genes that also drive
+    the clusters and is not evidence of senescence.
+    """
+    import numpy as np
+
+    scores = np.asarray(scores, dtype=float)
+    labels = np.asarray(labels)
+    if len(scores) != len(labels) or len(scores) == 0:
+        raise ValueError("scores and labels must be the same non-zero length")
+    if len(np.unique(labels)) < 2:
+        raise ValueError("need at least two cell types")
+    rng = np.random.default_rng(seed)
+    observed = type_spread(scores, labels)
+    at_least = sum(type_spread(scores, rng.permutation(labels)) >= observed
+                   for _ in range(n_permutations))
+    return {
+        "statistic": "variance of per-cell-type mean score",
+        "observed": observed,
+        "n_permutations": n_permutations,
+        "seed": seed,
+        "p_add_one": (at_least + 1) / (n_permutations + 1),
+    }
+
+
+def cell_type_counts(labels) -> dict[str, int]:
+    """Cells per assigned type, so small types are visible next to any score."""
+    counts: dict[str, int] = {}
+    for label in labels:
+        counts[str(label)] = counts.get(str(label), 0) + 1
+    return dict(sorted(counts.items()))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="analyze")
     parser.add_argument("--email", default="pbmc3k-atlas-slice@local", help="polite-pool contact")
@@ -209,6 +257,12 @@ def finish(root: Path, receipt: dict, adata, seed: int) -> int:
         for name in module_results:
             line += f"\t{round(float(sub[module_results[name]].mean()), 4)}"
         rows.append(line)
+    receipt["cells_per_cell_type"] = cell_type_counts(adata.obs["cell_type"])
+    receipt["label_permutation_null"] = {
+        name: label_permutation_null(adata.obs[col].values, adata.obs["cell_type"].values,
+                                     seed=seed)
+        for name, col in module_results.items() if adata.obs["cell_type"].nunique() > 1
+    }
     results_path = root / "data" / "results" / "cluster_module_scores.tsv"
     results_path.parent.mkdir(parents=True, exist_ok=True)
     results_path.write_text("\n".join(rows) + "\n", encoding="utf-8")

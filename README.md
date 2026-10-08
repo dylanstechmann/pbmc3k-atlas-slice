@@ -20,7 +20,12 @@ clear question — the pattern to copy for real senescence/organoid datasets.
 - `figures/module_scores_by_cell_type.png` — score distributions by cell type
 - `METHODS.md` — dataset URL + sha256, software versions, all QC parameters
 - `data/provenance/*_run.json` — full run receipt, including which module
-  genes were present vs missing in the data
+  genes were present vs missing in the data. It also records cells per assigned
+  cell type and a label-permutation null (1,000 shuffles, add-one p) for each
+  module's spread across cell types. The permutation code is unit-tested on
+  synthetic labels; it has not yet been run on the PBMC3k download (scanpy and
+  the download were unavailable in the 2026-10-08 session). Labels come from
+  marker rules on the same cells, so a small p is not evidence of senescence.
 
 ## Usage
 
